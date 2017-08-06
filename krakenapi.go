@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +14,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-    "errors"
 )
 
 const (
@@ -162,6 +162,16 @@ func (api *KrakenApi) Trades(pair string, since int64) (*TradesResponse, error) 
 	}
 
 	return result, nil
+}
+
+func (api *KrakenApi) TradeBalance(asset string) (*TradeBalanceResponse, error) {
+	params := url.Values{}
+	params.Add("asset", asset)
+	resp, err := api.queryPrivate("TradeBalance", params, &TradeBalanceResponse{})
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*TradeBalanceResponse), nil
 }
 
 // Balance returns all account asset balances
@@ -354,7 +364,7 @@ func (api *KrakenApi) doRequest(reqURL string, values url.Values, headers map[st
 	// Create request
 	req, err := http.NewRequest("POST", reqURL, strings.NewReader(values.Encode()))
 	if err != nil {
-		return nil, fmt.Errorf("Could not execute request! (%s)", err.Error())
+		return nil, fmt.Errorf("NewRequest returned errors. Could not execute request! (%s)", err.Error())
 	}
 
 	req.Header.Add("User-Agent", APIUserAgent)
@@ -365,14 +375,14 @@ func (api *KrakenApi) doRequest(reqURL string, values url.Values, headers map[st
 	// Execute request
 	resp, err := api.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("Could not execute request! (%s)", err.Error())
+		return nil, fmt.Errorf("http client.Do returned errors. Could not execute request! (%s)", err.Error())
 	}
 	defer resp.Body.Close()
 
 	// Read request
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Could not execute request! (%s)", err.Error())
+		return nil, fmt.Errorf("ioutil.ReadAll returned errors. Could not execute request! (%s)", err.Error())
 	}
 
 	// Parse request
@@ -386,12 +396,12 @@ func (api *KrakenApi) doRequest(reqURL string, values url.Values, headers map[st
 
 	err = json.Unmarshal(body, &jsonData)
 	if err != nil {
-		return nil, fmt.Errorf("Could not execute request! (%s)", err.Error())
+		return nil, fmt.Errorf("Unmarshal returned errors. Could not execute request! (%s)", err.Error())
 	}
 
 	// Check for Kraken API error
 	if len(jsonData.Error) > 0 {
-		return nil, fmt.Errorf("Could not execute request! (%s)", jsonData.Error)
+		return nil, fmt.Errorf("Api returned errors. Could not execute request! (%s)", jsonData.Error)
 	}
 
 	return jsonData.Result, nil

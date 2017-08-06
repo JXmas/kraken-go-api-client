@@ -1,10 +1,12 @@
 package krakenapi
 
-import(
-    "encoding/json"
+import (
+	"encoding/json"
+	"strconv"
 )
 
 const (
+	BCHEUR   = "BCHEUR"
 	DASHEUR  = "DASHEUR"
 	DASHUSD  = "DASHUSD"
 	DASHXBT  = "DASHXBT"
@@ -82,7 +84,8 @@ type TimeResponse struct {
 }
 
 // AssetPairsResponse includes asset pair informations
-type AssetPairsResponse struct {
+type AssetPairsResponse map[string]AssetPairInfo
+type AssetPairsResponse2 struct {
 	DASHEUR  AssetPairInfo
 	DASHUSD  AssetPairInfo
 	DASHXBT  AssetPairInfo
@@ -159,9 +162,9 @@ type AssetPairInfo struct {
 	// Amount to multiply lot volume by to get currency volume
 	LotMultiplier int `json:"lot_multiplier"`
 	// Array of leverage amounts available when buying
-	LeverageBuy []float32 `json:"leverage_buy"`
+	LeverageBuy []float64 `json:"leverage_buy"`
 	// Array of leverage amounts available when selling
-	LeverageSell []float32 `json:"leverage_sell"`
+	LeverageSell []float64 `json:"leverage_sell"`
 	// Fee schedule array in [volume, percent fee] tuples
 	Fees [][]float64 `json:"fees"`
 	// // Maker fee schedule array in [volume, percent fee] tuples (if on maker/taker)
@@ -176,6 +179,7 @@ type AssetPairInfo struct {
 
 // AssetsResponse includes asset informations
 type AssetsResponse struct {
+	BCH  AssetInfo
 	DASH AssetInfo
 	EOS  AssetInfo
 	GNO  AssetInfo
@@ -216,33 +220,46 @@ type AssetInfo struct {
 	DisplayDecimals int `json:"display_decimals"`
 }
 
+type TradeBalanceResponse struct {
+	EquivalentBalance                float64 `json:"eb,string"`
+	TradeBalance                     float64 `json:"tb,string"`
+	Margin                           float64 `json:"m,string"`
+	OpenPositionsUnrealizedNetProfit float64 `json:"n,string"`
+	OpenPositionsCostBasis           float64 `json:"c,string"`
+	OpenPositionsValuation           float64 `json:"v,string"`
+	Equity                           float64 `json:"e,string"`
+	FreeMargin                       float64 `json:"mf,string"`
+	MarginLevel                      float64 `json:"ml,string"`
+}
+
 type BalanceResponse struct {
-	DASH float32 `json:"DASH,string"`
-	EOS  float32 `json:"EOS,string"`
-	GNO  float32 `json:"GNO,string"`
-	KFEE float32 `json:"KFEE,string"`
-	USDT float32 `json:"USDT,string"`
-	XDAO float32 `json:"XDAO,string"`
-	XETC float32 `json:"XETC,string"`
-	XETH float32 `json:"XETH,string"`
-	XICN float32 `json:"XICN,string"`
-	XLTC float32 `json:"XLTC,string"`
-	XMLN float32 `json:"XMLN,string"`
-	XNMC float32 `json:"XNMC,string"`
-	XREP float32 `json:"XREP,string"`
-	XXBT float32 `json:"XXBT,string"`
-	XXDG float32 `json:"XXDG,string"`
-	XXLM float32 `json:"XXLM,string"`
-	XXMR float32 `json:"XXMR,string"`
-	XXRP float32 `json:"XXRP,string"`
-	XXVN float32 `json:"XXVN,string"`
-	XZEC float32 `json:"XZEC,string"`
-	ZCAD float32 `json:"ZCAD,string"`
-	ZEUR float32 `json:"ZEUR,string"`
-	ZGBP float32 `json:"ZGBP,string"`
-	ZJPY float32 `json:"ZJPY,string"`
-	ZKRW float32 `json:"ZKRW,string"`
-	ZUSD float32 `json:"ZUSD,string"`
+	BCH  float64 `json:"BCH,string"`
+	DASH float64 `json:"DASH,string"`
+	EOS  float64 `json:"EOS,string"`
+	GNO  float64 `json:"GNO,string"`
+	KFEE float64 `json:"KFEE,string"`
+	USDT float64 `json:"USDT,string"`
+	XDAO float64 `json:"XDAO,string"`
+	XETC float64 `json:"XETC,string"`
+	XETH float64 `json:"XETH,string"`
+	XICN float64 `json:"XICN,string"`
+	XLTC float64 `json:"XLTC,string"`
+	XMLN float64 `json:"XMLN,string"`
+	XNMC float64 `json:"XNMC,string"`
+	XREP float64 `json:"XREP,string"`
+	XXBT float64 `json:"XXBT,string"`
+	XXDG float64 `json:"XXDG,string"`
+	XXLM float64 `json:"XXLM,string"`
+	XXMR float64 `json:"XXMR,string"`
+	XXRP float64 `json:"XXRP,string"`
+	XXVN float64 `json:"XXVN,string"`
+	XZEC float64 `json:"XZEC,string"`
+	ZCAD float64 `json:"ZCAD,string"`
+	ZEUR float64 `json:"ZEUR,string"`
+	ZGBP float64 `json:"ZGBP,string"`
+	ZJPY float64 `json:"ZJPY,string"`
+	ZKRW float64 `json:"ZKRW,string"`
+	ZUSD float64 `json:"ZUSD,string"`
 }
 
 // TickerResponse includes the requested ticker pairs
@@ -321,7 +338,7 @@ type PairTickerInfo struct {
 	// High array(<today>, <last 24 hours>)
 	High []string `json:"h"`
 	// Today's opening price
-	OpeningPrice float32 `json:"o,string"`
+	OpeningPrice float64 `json:"o,string"`
 }
 
 // TradesResponse represents a list of the last trades
@@ -382,7 +399,7 @@ type Order struct {
 	StartTime      float64          `json:"starttm"`
 	ExpireTime     float64          `json:"expiretm"`
 	Description    OrderDescription `json:"descr"`
-	Volume         string           `json:"vol1"`
+	Volume         float64          `json:"vol1"`
 	VolumeExecuted float64          `json:"vol_exec,string"`
 	Cost           float64          `json:"cost,string"`
 	Fee            float64          `json:"fee,string"`
@@ -418,15 +435,34 @@ type CancelOrderResponse struct {
 
 // OrderBookItem is a piece of information about an order.
 type OrderBookItem struct {
-	Price  string
-	Amount string
+	Price  float64
+	Amount float64
 	Ts     int64
 }
 
 // UnmarshalJSON takes a json array from kraken and converts it into an OrderBookItem.
 func (o *OrderBookItem) UnmarshalJSON(data []byte) error {
-	arr := []interface{}{&o.Price, &o.Amount, &o.Ts}
-	return json.Unmarshal(data, &arr)
+	tmp_struct := struct {
+		price  string
+		amount string
+		ts     int64
+	}{}
+	tmp_arr := []interface{}{&tmp_struct.price, &tmp_struct.amount, &tmp_struct.ts}
+	err := json.Unmarshal(data, &tmp_arr)
+	if err != nil {
+		return err
+	}
+
+	o.Price, err = strconv.ParseFloat(tmp_struct.price, 64)
+	if err != nil {
+		return err
+	}
+	o.Amount, err = strconv.ParseFloat(tmp_struct.amount, 64)
+	if err != nil {
+		return err
+	}
+	o.Ts = tmp_struct.ts
+	return nil
 }
 
 // DepthResponse is a response from kraken to Depth request.
