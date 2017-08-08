@@ -164,6 +164,22 @@ func (api *KrakenApi) Trades(pair string, since int64) (*TradesResponse, error) 
 	return result, nil
 }
 
+func (api *KrakenApi) Ledgers(result_offset string, args map[string]string) (*LedgersResponse, error) {
+	params := url.Values{}
+	params.Add("ofs", result_offset)
+	optional_params := []string{"aclass", "class", "type", "start", "end"}
+	for _, arg_name := range optional_params {
+		if value, ok := args[arg_name]; ok {
+			params.Add(arg_name, value)
+		}
+	}
+	resp, err := api.queryPrivate("Ledgers", params, &LedgersResponse{})
+	if err != nil {
+		return nil, err
+	}
+	return resp.(*LedgersResponse), nil
+}
+
 func (api *KrakenApi) TradeBalance(asset string) (*TradeBalanceResponse, error) {
 	params := url.Values{}
 	params.Add("asset", asset)

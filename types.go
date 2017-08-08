@@ -220,6 +220,22 @@ type AssetInfo struct {
 	DisplayDecimals int `json:"display_decimals"`
 }
 
+type LedgerInfo struct {
+	ReferenceId      string  `json:"refid"`
+	Time             float64 `json:"time,float64"`
+	LedgerType       string  `json:"type"`
+	AssetClass       string  `json:"aclass"`
+	Asset            string  `json:"asset"`
+	Amount           float64 `json:"amount,string"`
+	TransactionFee   float64 `json:"fee,string"`
+	ResultingBalance float64 `json:"balance,string"`
+}
+
+type LedgersResponse struct {
+	Ledger map[string]LedgerInfo
+	Count  int64
+}
+
 type TradeBalanceResponse struct {
 	EquivalentBalance                float64 `json:"eb,string"`
 	TradeBalance                     float64 `json:"tb,string"`
