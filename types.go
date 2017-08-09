@@ -2,6 +2,7 @@ package krakenapi
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 )
 
@@ -218,6 +219,87 @@ type AssetInfo struct {
 	Decimals int
 	// Scaling decimal places for output display
 	DisplayDecimals int `json:"display_decimals"`
+}
+
+type TradesHistoryTradeInfo struct {
+	OrderTxId string  `json:"ordertxid"`
+	Pair      string  `json:"pair"`
+	Time      float64 `json:"time"`
+	Type      string  `json:"type"`
+	OrderType string  `json:"ordertype"`
+	Price     float64 `json:"price,string"`
+	Cost      float64 `json:"cost,string"`
+	Fee       float64 `json:"fee,string"`
+	Volume    float64 `json:"vol,string"`
+	Margin    float64 `json:"margin,string"`
+	Misc      string  `json:"misc"`
+}
+
+type TradesHistoryResponse struct {
+	Trades map[string]TradesHistoryTradeInfo
+	Count  int64
+}
+
+func (thr *TradesHistoryResponse) GetTrades() Trades {
+	trades := make(Trades, thr.Count)
+	i := 0
+	for txid, trade_info := range thr.Trades {
+		trade := NewTrade(txid)
+		trade.fromTradeInfo(trade_info)
+		trades[i] = *trade
+		i += 1
+	}
+	sort.Sort(trades)
+	return trades
+}
+
+type Trades []Trade
+
+func (trades Trades) Len() int {
+	return len(trades)
+}
+
+func (trades Trades) Less(i, j int) bool {
+	return trades[i].Time < trades[j].Time
+}
+
+func (trades Trades) Swap(i, j int) {
+	trades[i], trades[j] = trades[j], trades[i]
+}
+
+type Trade struct {
+	TradeTxId string  `json:"tradetxid"`
+	OrderTxId string  `json:"ordertxid"`
+	Pair      string  `json:"pair"`
+	Time      float64 `json:"time"`
+	Type      string  `json:"type"`
+	OrderType string  `json:"ordertype"`
+	Price     float64 `json:"price"`
+	Cost      float64 `json:"cost"`
+	Fee       float64 `json:"fee"`
+	Volume    float64 `json:"volume"`
+	Margin    float64 `json:"margin"`
+	Misc      string  `json:"misc"`
+}
+
+func NewTrade(txid string) *Trade {
+	return &Trade{
+		TradeTxId: txid,
+	}
+}
+
+func (t *Trade) fromTradeInfo(trade_info TradesHistoryTradeInfo) {
+	t.OrderTxId = trade_info.OrderTxId
+	t.Pair = trade_info.Pair
+	t.Time = trade_info.Time
+	t.Type = trade_info.Type
+	t.OrderType = trade_info.OrderType
+	t.Price = trade_info.Price
+	t.Cost = trade_info.Cost
+	t.Fee = trade_info.Fee
+	t.Volume = trade_info.Volume
+	t.Margin = trade_info.Margin
+	t.Misc = trade_info.Misc
 }
 
 type LedgerInfo struct {
