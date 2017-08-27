@@ -2,6 +2,7 @@ package krakenapi
 
 import (
 	"encoding/json"
+	"sort"
 	"strconv"
 )
 
@@ -218,6 +219,50 @@ type AssetInfo struct {
 	Decimals int
 	// Scaling decimal places for output display
 	DisplayDecimals int `json:"display_decimals"`
+}
+
+type Trades []Trade
+
+func (slice Trades) Len() int {
+	return len(slice)
+}
+
+func (slice Trades) Less(i, j int) bool {
+	return slice[i].Time > slice[j].Time
+}
+
+func (slice Trades) Swap(i, j int) {
+	slice[i], slice[j] = slice[j], slice[i]
+}
+
+type Trade struct {
+	Txid      string  `json:"txid"`
+	OrderTxid string  `json:"ordertxid"`
+	Misc      string  `json:"misc"`
+	Time      float64 `json:"time,float64"`
+	OrderType string  `json:"ordertype"`
+	Type      string  `json:"type"`
+	Pair      string  `json:"pair"`
+	Price     float64 `json:"price,string"`
+	Volume    float64 `json:"vol,string"`
+	Cost      float64 `json:"cost,string"`
+	Fee       float64 `json:"fee,string"`
+	Margin    float64 `json:"margin,string"`
+}
+
+type TradesHistoryResponse struct {
+	Trades map[string]Trade
+	Count  int64
+}
+
+func (thr *TradesHistoryResponse) GetTrades() Trades {
+	trades := make(Trades, 0)
+	for k, v := range thr.Trades {
+		v.Txid = k
+		trades = append(trades, v)
+	}
+	sort.Sort(trades)
+	return trades
 }
 
 type LedgerInfo struct {
