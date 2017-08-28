@@ -164,21 +164,6 @@ func (api *KrakenApi) Trades(pair string, since int64) (*TradesResponse, error) 
 	return result, nil
 }
 
-func (api *KrakenApi) TradesHistory(args map[string]string) (*TradesHistoryResponse, error) {
-	params := url.Values{}
-	optional_params := []string{"aclass", "class", "type", "start", "end"}
-	for _, arg_name := range optional_params {
-		if value, ok := args[arg_name]; ok {
-			params.Add(arg_name, value)
-		}
-	}
-	resp, err := api.queryPrivate("TradesHistory", params, &TradesHistoryResponse{})
-	if err != nil {
-		return nil, err
-	}
-	return resp.(*TradesHistoryResponse), nil
-}
-
 func (api *KrakenApi) Ledgers(result_offset string, args map[string]string) (*LedgersResponse, error) {
 	params := url.Values{}
 	params.Add("ofs", result_offset)
